@@ -1,0 +1,36 @@
+language: node_js
+node_js:
+- '0.10'
+before_install:
+  - npm install npm -g
+before_deploy:
+  - npm install ws browserify coffeeify
+  - mkdir -p deploy/meshblu-sonos/latest
+  - mkdir -p deploy/meshblu-sonos/$TRAVIS_TAG
+  - node_modules/.bin/browserify -t coffeeify -s Connector connector.js > deploy/meshblu-sonos/latest/meshblu-sonos.js
+  - gzip deploy/meshblu-sonos/latest/meshblu-sonos.js
+  - mv deploy/meshblu-sonos/latest/meshblu-sonos.js.gz deploy/meshblu-sonos/latest/meshblu-sonos.js
+  - cp deploy/meshblu-sonos/latest/meshblu-sonos.js deploy/meshblu-sonos/$TRAVIS_TAG/meshblu-sonos.js
+deploy:
+  - provider: s3
+    region: us-west-2
+    skip_cleanup: true
+    detect_encoding: true
+    access_key_id: AKIAJH2D5IPIRHYJT5IA
+    secret_access_key:
+      secure: "6ncsiYkMBILai/wxvmMsOzG8iJZ+dJ3X9WU4DfOyTwr1yjLPx8K2F6/8W7QjyICCsCXrLuRCV+gw9R8CaZLCBmJi55tbkqE9UPHjeLgFVhfr1NpQddc1VYUkVlxcZ2SHE/iCsrWfNsG+jOsckZFEQ/CHIsCqOsqZNKV1AkcQu3SBuGonP29CKyyC69S1AnVoUTl7bhb64occ5QMIFFTBgZ0M1ktY+dM9x0J+Jo0tfRILjtKw4UCfd08MHVTfT9Awj7wBWLEYUp/GZpF1oVr/yLSBt1gdG3Rt+mi5fGXMSO/Th/u7D9iV3QYWwg21St7/YeJobdA0h1gqo0BOYwBUIFUKrkN4Tn4QFo62uVSnfboiWj5ekc5hmJuydmONJNKu4m5eJ5XDaLmso3KdaiOHspgHvfuwikl/lmyiOuNJ1eavIZFZJnHtAeNc5vx8Gz3ugJ3n/kJIQz/7zDP3iK1VXOr7WCbBmGb24PG33JyB00lCCgdrqrn7lUHjRU4AdJdD1yd3OE0M3xIKyoduyI5o+i+l6SnPXlqAMPYD9AZSKsQEJpFOf+G7EOBMEd7kCfBpysJMws7qUKaaCjcCAGgQmyP93NHY+KGP7WAtYnRpGHV0itf9mjWz0ZytAA2KqYOXV5FSqdCpstx9RffOAFuVRjzwEdFjyzrdPaRxWzPjjvE="
+    bucket: octoblu-cdn
+    local-dir: deploy
+    upload-dir: js
+    on:
+      tags: true
+      all_branches: true
+  - provider: npm
+    skip_cleanup: true
+    clean_up: false
+    email: serveradmin@octoblu.com
+    api_key:
+      secure: "6o2NRCCsxffMaDI0nF9kL0F16yO0Hsp90Cv8Tooiwx9frEHYpI81XKhukUAkhbFCFNctvstiPkviBYWGId2BKs2KoImZbsJpFc+qA9sLLiaW3azc6SFNs9NGPr00rhrB8Mtp46hgwylNa9XmdQWiinbN3BsxXFxhdjCjOaVZzyDU8KJ9BBOIGHk2poSx1xrISkCW27R6tz0GIrbBfRk9usomkGPKuUGdkSmler46RYTMsRwOA6H90wvUaPS1ObuRM5FtYzM2cICl7wss4ntdG2x7wbkT/qivZVw0eXU3f0OITJLK9Rg68mmJqtM7YgeV2L3w3SOem/Ss5s2bORTkexqa80/rNISpnLHOYVGlWcJc+CObqsxZyfSoqPxgwyuENIMznZK8gSm13gFDNkQQ8YiDIy8Wt2/M5BfkjaG8GCz1V1oBRu9U782XU2n8GXM/p6ifFnmGy/A6snmBX3iI1iG2YzSWnC6AMNxEqNJIWpdRl5cnxtqygO4BL6TJriePCaPKEXIQA5XQ82f1vVM9QuaA/+5hYt1vR7aAVQIrwFrbfWJ+d+eJmA86RjBpQwAJHXjkW5PrtJFBCshvWhJONRzKr2y+89ENLCrbQ0YoSVUJFsaJK7zp8RCybCo0MrS+pne1Eo0+h/XcWJuotb/rw1IL3LzaRbmHdlsUpw4ABa8="
+    on:
+      tags: true
+      all_branches: true

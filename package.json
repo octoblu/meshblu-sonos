@@ -1,7 +1,7 @@
 {
   "name": "meshblu-sonos",
   "repository": "octoblu/meshblu-sonos",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "connector.js",
   "scripts": {
     "preinstall": "node -e \"try{require('./skip-install.js')}catch(e){}\"",
@@ -9,8 +9,10 @@
     "test": "exit 0"
   },
   "dependencies": {
-    "debug": "^2.1.0",
-    "meshblu": "^1.22.0",
+    "debug": "^2.2.0",
+    "lodash": "^3.10.1",
+    "meshblu": "^1.30.1",
+    "meshblu-config": "^3.1.1",
     "sonos": "^0.8.0"
   },
   "bundledDependencies": [
@@ -18,6 +20,15 @@
     "tar",
     "fstream"
   ],
+  "platformDependencies": {
+    "darwin": [],
+    "win32": [],
+    "win64": [],
+    "linux": [],
+    "android": [],
+    "ios": []
+  },
+  "license": "MIT",
   "keywords": [
     "meshblu-connector",
     "gateblu"

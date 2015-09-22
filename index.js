@@ -1,14 +1,9 @@
 'use strict';
-var util = require('util');
+var util         = require('util');
 var EventEmitter = require('events').EventEmitter;
-var debug = require('debug')('meshblu-sonos');
-var Sonos = require('sonos');
-var cSonos = require('sonos').Sonos;
-var search = Sonos.search();
-var ip;
-var discoveredIp;
-var sonos;
-
+var debug        = require('debug')('meshblu-sonos');
+var Sonos        = require('sonos');
+var cSonos       = require('sonos').Sonos;
 
 var MESSAGE_SCHEMA = {
   type: 'object',
@@ -22,7 +17,7 @@ var MESSAGE_SCHEMA = {
 
 var OPTIONS_SCHEMA = {
   type: 'object',
-  properties: {  
+  properties: {
     useCustomIP: {
       type: 'boolean',
       default: false,
@@ -36,50 +31,64 @@ var OPTIONS_SCHEMA = {
 };
 
 
-search.on('DeviceAvailable', function (device, model) {
-    console.log(device, model)
-    discoveredIp = device.host;
-    console.log(discoveredIp);
-
-  })
-
 function Plugin(){
-  this.options = {};
-  this.messageSchema = MESSAGE_SCHEMA;
-  this.optionsSchema = OPTIONS_SCHEMA;
-  return this;
+  debug('initializing');
+  var self = this;
+  self.options = {};
+  self.messageSchema = MESSAGE_SCHEMA;
+  self.optionsSchema = OPTIONS_SCHEMA;
+  self.sonos = null;
+  return self;
 }
 util.inherits(Plugin, EventEmitter);
 
 Plugin.prototype.onMessage = function(message){
-  var payload = message.payload;
- // this.emit('message', {devices: ['*'], topic: 'echo', payload: payload});
+  var self = this;
+  var payload = message.payload || {};
 
-  sonos.play(payload.playUrl, function (err, playing) {
-  console.log([err, playing])
-})
+  if(self.options.useCustomIP && self.options.ip){
+    debug('using custom ip');
+    self.sonos = new cSonos(self.options.ip);
+    self.playUrl(payload.playUrl);
+    return;
+  }
+  self.getDeviceIp(function(error, ipAddress){
+    self.sonos = new cSonos(ipAddress);
+    self.playUrl(payload.playUrl);
+  });
+};
 
-
+Plugin.prototype.playUrl = function(url){
+  var self = this;
+  self.sonos.play(url, function (err, playing) {
+    debug('play response', {error: err, playing: playing});
+  });
 };
 
 Plugin.prototype.onConfig = function(device){
-  this.setOptions(device.options||{});
   var self = this;
-  
-
-if(self.options.useCustomIP){
-    sonos = new cSonos(self.options.ip);
-  }else{
-
-    sonos = new cSonos(discoveredIp);
-  }
-
-    
-
+  self.setOptions(device.options||{});
 };
 
+Plugin.prototype.getDeviceIp = function(callback){
+  var self = this;
+  if(self.discoveredIp){
+    debug('ip address already discovered', self.discoveredIp);
+    return callback(null, self.discoveredIp);
+  }
+  debug('discovering...');
+  var search = Sonos.search();
+  search.on('DeviceAvailable', function (device, model) {
+    debug('device discovered', device, model);
+    self.discoveredIp = device.host;
+    debug('ipAddress', self.discoveredIp);
+    callback(null, self.discoveredIp);
+  })
+}
+
 Plugin.prototype.setOptions = function(options){
-  this.options = options;
+  var self = this;
+  self.options = options || {};
 };
 
 module.exports = {
